@@ -1,5 +1,4 @@
 import os
-import matplotlib.pyplot as plt
 
 import wandb
 from wandb.keras import WandbCallback
