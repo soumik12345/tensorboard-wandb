@@ -8,6 +8,7 @@ import tensorflow as tf
 from datetime import datetime
 
 
+wandb.login()
 wandb.init(project="tensorboard-demo", sync_tensorboard=True)
 
 config = wandb.config
