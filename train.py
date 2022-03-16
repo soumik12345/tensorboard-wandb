@@ -34,9 +34,9 @@ config.tensorboard_log_dir = os.path.join(
     "logs", datetime.now().strftime("%Y%m%d-%H%M%S")
 )
 
-(train_images, train_labels), (
-    test_images,
-    test_labels,
+(
+    (train_images, train_labels),
+    (test_images, test_labels,),
 ) = tf.keras.datasets.fashion_mnist.load_data()
 
 train_images = train_images / 255.0

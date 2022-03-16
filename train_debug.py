@@ -1,17 +1,17 @@
 import os
-
 import wandb
-from wandb.keras import WandbCallback
-
 import tensorflow as tf
 from datetime import datetime
 
 
-wandb.login()
-wandb.init(project="tensorboard-demo", name="train-debug", sync_tensorboard=True)
+wandb.tensorboard.patch(root_logdir="./logs/debug")
+wandb.init(project="tensorboard-demo", sync_tensorboard=True)
 
-config = wandb.config
-config.labels = [
+tf.debugging.experimental.enable_dump_debug_info(
+    "./logs/debug", tensor_debug_mode="FULL_HEALTH", circular_buffer_size=-1
+)
+
+labels = [
     "T-shirt/top",
     "Trouser",
     "Pullover",
@@ -23,62 +23,37 @@ config.labels = [
     "Bag",
     "Ankle boot",
 ]
-config.input_size = 28
-config.dense_layer_units = 32
-config.dropout_rate = 0.2
-config.batch_size = 64
-config.validation_batch_size = 64
-config.learning_rate = 1e-3
-config.epochs = 5
-config.tensorboard_log_dir = os.path.join(
-    "logs", datetime.now().strftime("%Y%m%d-%H%M%S")
-)
-
-tf.debugging.experimental.enable_dump_debug_info(
-    config.tensorboard_log_dir,
-    tensor_debug_mode="FULL_HEALTH",
-    circular_buffer_size=-1
-)
-
-(train_images, train_labels), (
-    test_images,
-    test_labels,
+(
+    (train_images, train_labels),
+    (test_images, test_labels),
 ) = tf.keras.datasets.fashion_mnist.load_data()
-
 train_images = train_images / 255.0
 test_images = test_images / 255.0
-
 model = tf.keras.models.Sequential(
     [
-        tf.keras.layers.Flatten(input_shape=(config.input_size, config.input_size)),
-        tf.keras.layers.Dense(config.dense_layer_units, activation="relu"),
-        tf.keras.layers.Dropout(config.dropout_rate),
-        tf.keras.layers.Dense(len(config.labels), activation="softmax"),
+        tf.keras.layers.Flatten(input_shape=(28, 28)),
+        tf.keras.layers.Dense(32, activation="relu"),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(len(labels), activation="softmax"),
     ]
 )
 
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=config.learning_rate),
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
     loss=tf.keras.losses.SparseCategoricalCrossentropy(),
     metrics=["accuracy"],
 )
 
 tensorboard_callback = tf.keras.callbacks.TensorBoard(
-    log_dir=config.tensorboard_log_dir
-)
-
-wandb_callback = WandbCallback(
-    log_evaluation=True, validation_steps=config.validation_batch_size
+    log_dir=os.path.join("logs", datetime.now().strftime("%Y%m%d-%H%M%S"))
 )
 
 model.fit(
     train_images,
     train_labels,
-    batch_size=config.batch_size,
+    batch_size=64,
     validation_data=(test_images, test_labels),
-    validation_batch_size=config.validation_batch_size,
-    epochs=config.epochs,
-    callbacks=[tensorboard_callback, wandb_callback],
+    validation_batch_size=64,
+    epochs=1,
+    callbacks=[tensorboard_callback],
 )
-
-wandb.finish()
