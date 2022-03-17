@@ -221,6 +221,7 @@ def main(_):
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_test, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         print("Accuracy at step %d: %s" % (i, accuracy.numpy()))
+        wandb.log({"accuracy": accuracy.numpy()}, step=i)
 
 
 if __name__ == "__main__":
